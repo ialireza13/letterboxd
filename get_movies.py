@@ -5,7 +5,7 @@ from tqdm import tqdm
 from time import sleep
 
 base_url = 'https://letterboxd.com/films/by/rating/size/small/page/'
-page = 80
+page = 120
 
 while(True):
     print("Page:",page)
