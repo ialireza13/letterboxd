@@ -6,9 +6,11 @@ from time import sleep
 
 base_url = 'https://letterboxd.com/films/by/rating/size/small/page/'
 page = 1
+
 while(True):
     print("Page:",page)
     url = base_url+str(page)
+    print(url)
     page+=1
     try:
         session = HTMLSession()
@@ -16,24 +18,21 @@ while(True):
     except requests.exceptions.RequestException as e:
         print(e)
 
-    flag=True
-    while(flag==True):
-        try:
-            response.html.render()
-            flag = False
-        except:
-            print('Error in rendering, retrying...')
-            sleep(5)
+    try:
+        response.html.render()
+    except:
+        print('Error in rendering, retrying...')
+        sleep(5)
 
     html = response.html.raw_html
 
     soup = BeautifulSoup(html, 'html.parser')
-    try:
-        content = soup.find(id='content').find(class_='content-wrap').find(class_='section col-24 col-main').find(id='films-browser-list-container') \
-            .find(class_='poster-list -p70 -grid')
-    except:
-        break
-
+    content = soup.find(id='content')
+    content = content.find(class_='content-wrap')
+    content = content.find(class_='section col-24 col-main')
+    content = content.find(id='films-browser-list-container')
+    content = content.find(class_='poster-list -p70 -grid')
+    
     items = content.find_all(class_='listitem poster-container')
     items = [item.find_all(class_='')[0].find(class_='frame') for item in items]
 
