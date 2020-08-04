@@ -3,9 +3,22 @@ from bs4 import BeautifulSoup
 from requests_html import AsyncHTMLSession, HTMLSession
 from tqdm import tqdm
 from time import sleep
+from os.path import isfile
 
+batch_size = 20
 base_url = 'https://letterboxd.com/films/by/rating/size/small/page/'
-page = 124
+
+if isfile('page_number.txt'):
+    with open('page_number.txt', 'r+') as f:
+        try:
+            page = int(f.readline())
+        except:
+            page = 1
+            f.write(str(page))
+else:
+    page = 1
+    with open('page_number.txt', 'w') as f:
+        f.write(str(page))
 
 while(True):
     print("Page:",page)
@@ -48,6 +61,13 @@ while(True):
         links.append('https://letterboxd.com'+attrs['href'][:-1])
         years.append(name_[-1][1:-1])
     
-    with open('movies.txt','a') as f:
-        for i in range(len(names)):
-            f.writelines(names[i]+','+years[i]+','+links[i]+'\n')
+    if (page%batch_size==0):
+        with open('movies-'+str(int(page/batch_size)+1)+'.txt','w') as f:
+            for i in range(len(names)):
+                f.writelines(names[i]+','+years[i]+','+links[i]+'\n')
+    else:
+        with open('movies-'+str(int(page/batch_size)+1)+'.txt','a') as f:
+            for i in range(len(names)):
+                f.writelines(names[i]+','+years[i]+','+links[i]+'\n')
+    with open('page_number.txt', 'w') as f:
+        f.write(str(page))
