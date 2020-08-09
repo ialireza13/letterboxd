@@ -5,7 +5,7 @@ from tqdm import tqdm
 from time import sleep
 from os.path import isfile
 
-batch_size = 20
+batch_size = 1
 base_url = 'https://letterboxd.com/films/by/rating/size/small/page/'
 
 if isfile('page_number.txt'):
@@ -59,45 +59,65 @@ while(True):
     fans = []
     ratings = []
     watches = []
+    durations = []
     likes = []
-    for i in tqdm(range(len(items))):
+    for i in range(len(items)):
+        
         attrs = items[i].attrs
         name_ = attrs['data-original-title'].split(sep=' ')
         names.append(' '.join(name_[:-1]))
         links.append('https://letterboxd.com'+attrs['href'][:-1])
         years.append(name_[-1][1:-1])
-        response = session.get(links[-1])
+        
         while(True):
             try:
+                response = session.get(links[-1])
                 response.html.render()
-
+                print(i)
                 html = response.html.raw_html
-
+                
+                print(names[-1])
                 soup = BeautifulSoup(html, 'html.parser')
                 content = soup.find(id='content')
                 content = content.find(class_='content-wrap')
                 content = content.find(id='film-page-wrapper')
                 stats = content.find(id='js-poster-col')
                 content = content.find(class_='col-17')
-
-                duration_ = content.find(class_='text-link text-footer').text.split(sep=' ')[0]
+                try:
+                    duration_ = content.find(class_='text-link text-footer').text.split(sep=' ')[0]
+                except:
+                    duration_ = "null"
                 
                 director_ = content.find(id='featured-film-header')
-                director_ = director_.find_all(class_='prettify')[1].text
+                try:
+                    director_ = director_.find_all(class_='prettify')[1].text
+                except:
+                   director_ = "null"
 
                 content = content.find(class_='sidebar')
                 content = content.find(class_='section ratings-histogram-chart')
 
-                fans_ = content.find(class_='all-link more-link').text.split(sep=' ')[0]
+                try:
+                    fans_ = content.find(class_='all-link more-link').text.split(sep=' ')[0]
+                except:
+                    fans_ = "null"
                 
-                ratings_ = content.find_all(class_='ir tooltip')
-                ratings_ = [rate.attrs['data-original-title'].split('\xa0')[0] for rate in ratings_]
-                
+                try:
+                    ratings_ = content.find_all(class_='ir tooltip')
+                    ratings_ = [rate.attrs['data-original-title'].split('\xa0')[0] for rate in ratings_]
+                except:
+                    ratings_ = ['','','','','','','','','','']               
+
                 stats = stats.find(class_="poster-list -p230 no-hover el col")
                 stats = stats.find(class_="film-stats")
-
-                watches_ = stats.find(class_='stat filmstat-watches').text
-                likes_ = stats.find(class_='stat filmstat-likes').text
+                try:
+                    watches_ = stats.find(class_='stat filmstat-watches').text
+                except:
+                    watches_ = "null"
+                try:
+                    likes_ = stats.find(class_='stat filmstat-likes').text
+                except:
+                    likes_ = 'null'
             except:
                 print('Error in rendering, retrying...')
                 sleep(1)
@@ -113,13 +133,16 @@ while(True):
     if (page%batch_size==0):
         with open('movies-'+str(int(page/batch_size)+1)+'.txt','w') as f:
             for i in range(len(names)):
-                f.writelines(names[i]+','+years[i]+','+links[i]+','+directors[i]+','+fans[i]+','+\
+                f.writelines(names[i]+','+years[i]+','+links[i]+','+directors[i]+','+durations[i]+','+fans[i]+','+\
                     watches[i]+','+likes[i]+','+ratings[i][0]+'|'+ratings[i][1]+'|'+rating[i][2]+\
                     '|'+ratings[i][3]+'|'+ratings[i][4]+'|'+ratings[i][5]+'|'+ratings[i][6]+'|'+\
                     ratings[i][7]+'|'+ratings[i][8]+'|'+ratings[i][9]+'\n')
     else:
         with open('movies-'+str(int(page/batch_size)+1)+'.txt','a') as f:
             for i in range(len(names)):
-                f.writelines(names[i]+','+years[i]+','+links[i]+'\n')
+                f.writelines(names[i]+','+years[i]+','+links[i]+','+directors[i]+','+durations[i]+','+fans[i]+','+\
+                    watches[i]+','+likes[i]+','+ratings[i][0]+'|'+ratings[i][1]+'|'+rating[i][2]+\
+                    '|'+ratings[i][3]+'|'+ratings[i][4]+'|'+ratings[i][5]+'|'+ratings[i][6]+'|'+\
+                    ratings[i][7]+'|'+ratings[i][8]+'|'+ratings[i][9]+'\n')
     with open('page_number.txt', 'w') as f:
         f.write(str(page))
